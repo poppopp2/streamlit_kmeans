@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder,OneHotEncoder
 from sklearn.compose import ColumnTransformer
-from sklearn.cluster import k_means
+from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -78,18 +78,39 @@ def main():
 
 
             #5. k의 갯수를 1부터 10개까지 해서 wcss를 구한다.
+            wcss = []
+            for k in range(1, 11):
+                kmeans = KMeans(n_clusters=k, random_state=5)
+                kmeans.fit(X_new)
+                wcss.append(kmeans.inertia_)
 
             
             #6. elbow method 를 이용해서, 차트로 보여준다.
+            fig1=plt.figure()
+            x=np.arange(1,10+1)
+            plt.plot(x,wcss)
+            plt.title('엘보우 메소드')
+            plt.xlabel('Number of Clusters')
+            st.pyplot(fig1)
 
             #7. 유저가 k의 갯수를 정한다.
+            k = st.slider('클러스터 갯수 설정',1,10)
+                #8. kmeans 수행해서 그룹정보를 가져온다.
+            kmeans=KMeans(n_clusters=k,random_state=5)
+            y_pred = kmeans.fit_predict(X_new)                
+                #9. 원래 있던 df 에 Group이라는 컬럼을 만들어준다.
+            df['Group']= y_pred
+            
+            # 10. 결과를 파일로 저장한다. 
+            df.to_csv('result.csv')
 
-            #8. kmeans 수행해서 그룹정보를 가져온다.
+            # 11. 유저에게 보여준다.
+            st.subheader('클러스터링 결과')
 
-            #9. 원래 있던 df 에 Group이라는 컬럼을 만들어준다.
-
-            #10. 결과를 파일로 저장한다.
-
+            st.dataframe(df)
+            #12. 유저가 그룹을 선택하면, 해당 그룹의 정보를 보여준다.
+            choice=st.selectbox('그룹을 선택하세요,', np.arange(0,k))
+            st.dataframe(df.loc[df['Group']==choice,])
 
 if __name__=='__main__':
     main()
